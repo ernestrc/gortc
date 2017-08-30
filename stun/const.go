@@ -37,10 +37,10 @@ const (
 )
 
 var (
-	ErrTryAlternateServer StunError = StunError{300, "Try Alternate Server"}
-	ErrBadRequest                   = StunError{400, "Bad Request"}
-	ErrUnauthorized                 = StunError{401, "Unauthorized"}
-	ErrStaleCredentials             = StunError{420, "Unknown Attribute"}
-	ErrStaleNonce                   = StunError{438, "Stale Nonce"}
-	ErrServerError                  = StunError{500, "Server Error"}
+	ErrTryAlternateServer Error = Error{300, "Try Alternate Server"}
+	ErrBadRequest               = Error{400, "Bad Request"}
+	ErrUnauthorized             = Error{401, "Unauthorized"}
+	ErrStaleCredentials         = Error{420, "Unknown Attribute"}
+	ErrStaleNonce               = Error{438, "Stale Nonce"}
+	ErrServerError              = Error{500, "Server Error"}
 )

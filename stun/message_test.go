@@ -42,7 +42,7 @@ var rfc5769SampleRequestBytes = []byte{
 var rfc5769SampleRequest = Message{
 	Class:  Request,
 	Method: Binding,
-	Id: []byte{
+	ID: []byte{
 		0x21, 0x12, 0xa4, 0x42,
 		0xb7, 0xe7, 0xa7, 0x01,
 		0xbc, 0x34, 0xd6, 0x86,
@@ -114,7 +114,7 @@ var rfc5769SampleResponseBytes = []byte{
 var rfc5769SampleResponse = Message{
 	Class:  SuccessResponse,
 	Method: Binding,
-	Id: []byte{
+	ID: []byte{
 		0x21, 0x12, 0xa4, 0x42,
 		0xb7, 0xe7, 0xa7, 0x01,
 		0xbc, 0x34, 0xd6, 0x86,
@@ -179,7 +179,7 @@ var rfc5769SampleResponseIPv6Bytes = []byte{
 var rfc5769SampleResponseIPv6 = Message{
 	Class:  SuccessResponse,
 	Method: Binding,
-	Id: []byte{
+	ID: []byte{
 		0x21, 0x12, 0xa4, 0x42,
 		0xb7, 0xe7, 0xa7, 0x01,
 		0xbc, 0x34, 0xd6, 0x86,
@@ -253,7 +253,7 @@ var rfc5769SampleRequestLongTermAuthBytes = []byte{
 var rfc5769SampleRequestLongTermAuth = Message{
 	Class:  Request,
 	Method: Binding,
-	Id: []byte{
+	ID: []byte{
 		0x21, 0x12, 0xa4, 0x42,
 		0x78, 0xad, 0x34, 0x33,
 		0xc6, 0xad, 0x72, 0xc0,
@@ -331,7 +331,7 @@ var rfc3489SampleRequestBytes = []byte{
 var rfc3489SampleRequest = Message{
 	Class:  Request,
 	Method: Binding,
-	Id: []byte{
+	ID: []byte{
 		0x41, 0x22, 0x39, 0x36,
 		0xb7, 0xe7, 0xa7, 0x01,
 		0xbc, 0x34, 0xd6, 0x86,
@@ -394,19 +394,19 @@ func checkType(t *testing.T, msg *Message, expectedMethod Method, expectedClass 
 	}
 }
 
-func checkStunTransactionID(t *testing.T, msg *Message, expectedId string) {
-	if len(expectedId) != len(msg.Id) {
-		t.Fatalf("unexpected transaction ID length: %d vs %d", len(expectedId), len(msg.Id))
+func checkStunTransactionID(t *testing.T, msg *Message, expectedID string) {
+	if len(expectedID) != len(msg.ID) {
+		t.Fatalf("unexpected transaction ID length: %d vs %d", len(expectedID), len(msg.ID))
 	}
 
-	if len(expectedId) == 16 && !msg.IsLegacy() {
+	if len(expectedID) == 16 && !msg.IsLegacy() {
 		t.Errorf("expected IsLegacy to be true")
-	} else if len(expectedId) == 12 && msg.IsLegacy() {
+	} else if len(expectedID) == 12 && msg.IsLegacy() {
 		t.Errorf("expected IsLegacy to be false")
 	}
 
-	if expectedId != string(msg.Id) {
-		t.Errorf("expected %s found %s", expectedId, string(msg.Id))
+	if expectedID != string(msg.ID) {
+		t.Errorf("expected %s found %s", expectedID, string(msg.ID))
 	}
 }
 
@@ -422,7 +422,12 @@ func TestIsStun(t *testing.T) {
 	}
 
 	// RFC 3489 message
-	if !IsStun(rfc3489SampleRequestBytes[:]) {
+	if IsStun(rfc3489SampleRequestBytes[:]) {
+		t.Error("IsStun should return true on a classic STUN packet")
+	}
+
+	// RFC 3489 message
+	if !IsStunCompat(rfc3489SampleRequestBytes[:]) {
 		t.Error("IsStun should return true on a classic STUN packet")
 	}
 }
@@ -443,7 +448,7 @@ var marshalTestcases = []testCase{
 func TestUnmarshal(t *testing.T) {
 
 	for _, tcase := range marshalTestcases {
-		msg, err := Unmarshal(tcase.data)
+		msg, err := UnmarshalCompat(tcase.data)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -483,6 +488,12 @@ func TestMarshal(t *testing.T) {
 func TestNotStunError(t *testing.T) {
 	_, err := Unmarshal(rtcpPacket)
 
+	if err != ErrNoStun {
+		t.Fatalf("expected error to be ErrNoStun but %s found", err)
+	}
+
+	// non-backwards compatible method is used instead
+	_, err = Unmarshal(rfc3489SampleRequestBytes)
 	if err != ErrNoStun {
 		t.Fatalf("expected error to be ErrNoStun but %s found", err)
 	}
