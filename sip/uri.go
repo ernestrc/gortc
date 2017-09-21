@@ -21,7 +21,7 @@ type URI struct {
 func (u *URI) parsePort(raw string) (err error) {
 	var port uint64
 	if port, err = strconv.ParseUint(raw, 10, 16); err != nil {
-		return fmt.Errorf("invalid port: %s", raw)
+		return fmt.Errorf("invalid URI port: %s", raw)
 	}
 	u.Port = uint16(port)
 	return
@@ -110,6 +110,17 @@ func (u *URI) next(i int, r byte, raw string, state, anchor, anchorAux *int) (er
 	return
 }
 
+func (u *URI) checkValid() error {
+	switch u.Scheme {
+	case "sips":
+	case "sip":
+	default:
+		return fmt.Errorf("invalid URI scheme: %s", u.Scheme)
+	}
+
+	return nil
+}
+
 func (u *URI) Parse(raw string) (err error) {
 	state := scheme
 	anchor := 0
@@ -131,6 +142,7 @@ func (u *URI) Parse(raw string) (err error) {
 		err = u.next(len(raw), ';', raw, &state, &anchor, &anchorAux)
 	}
 
+	err = u.checkValid()
 	return
 }
 

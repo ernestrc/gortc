@@ -1,6 +1,7 @@
 package sip
 
 import (
+	"fmt"
 	"net/url"
 	"reflect"
 	"testing"
@@ -103,7 +104,9 @@ func testOK(t *testing.T, expected, uri URI) {
 func TestParse(t *testing.T) {
 	for _, tcase := range cases {
 		uri := URI{}
-		uri.Parse(tcase.raw)
+		if err := uri.Parse(tcase.raw); err != nil {
+			t.Error(err)
+		}
 		testOK(t, tcase.uri, uri)
 	}
 }
@@ -111,26 +114,51 @@ func TestParse(t *testing.T) {
 var bad = []struct {
 	raw string
 	uri URI
+	err error
 }{
 	{
-		"sip:ernicles:copernicles@1234.com;;?a=b;;", URI{
+		"sip:@1234.com;;?a=b", URI{
+			Scheme: "sip",
+			Host:   "1234.com",
+			Params: url.Values{},
+			Headers: url.Values{
+				"a": []string{"b"},
+			},
+		}, nil,
+	},
+	{
+		"sip:ernicles:copernicles@1234.com?a=b;;", URI{
 			Scheme:   "sip",
 			Host:     "1234.com",
 			User:     "ernicles",
 			Password: "copernicles",
-			Params:   url.Values{},
 			Headers: url.Values{
 				"a": []string{"b"},
 			},
-		},
+		}, nil,
+	},
+	{
+		"sips:1234.com:111111111111111111;;", URI{}, fmt.Errorf("invalid URI port: 111111111111111111"),
+	},
+	{
+		"sops:1234.com:1234;;", URI{}, fmt.Errorf("invalid URI scheme: sops"),
 	},
 }
 
-func TestParseTricky(t *testing.T) {
+func TestParseBad(t *testing.T) {
 	for _, tcase := range bad {
 		uri := URI{}
-		uri.Parse(tcase.raw)
-		testOK(t, tcase.uri, uri)
+		err := uri.Parse(tcase.raw)
+		switch {
+		case tcase.err == nil && err == nil:
+			testOK(t, tcase.uri, uri)
+		case tcase.err != nil && err == nil:
+			t.Errorf("should have returned error %s but no error returned", tcase.err)
+		case tcase.err == nil && err != nil:
+			t.Error(err)
+		case !reflect.DeepEqual(tcase.err, err):
+			t.Errorf("should have returned error \"%s\" but instead \"%s\" was returned", tcase.err, err)
+		}
 	}
 }
 
