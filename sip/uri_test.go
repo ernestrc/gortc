@@ -143,6 +143,15 @@ var bad = []struct {
 	{
 		"sops:1234.com:1234;;", URI{}, fmt.Errorf("invalid URI scheme: sops"),
 	},
+	{
+		"         sip:1234.com?a=b", URI{
+			Scheme: "sip",
+			Host:   "1234.com",
+			Headers: url.Values{
+				"a": []string{"b"},
+			},
+		}, nil,
+	},
 }
 
 func TestParseBad(t *testing.T) {

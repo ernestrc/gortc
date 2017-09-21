@@ -52,13 +52,15 @@ func (u *URI) parseHost(i int, raw string, state, anchor, anchorAux *int, nextSt
 
 func (u *URI) next(i int, r byte, raw string, state, anchor, anchorAux *int) (err error) {
 	switch *state {
-	// TODO should hande empty whitespaces at start and end
 	case scheme:
-		if r == ':' {
-			u.Scheme = raw[:i]
+		switch r {
+		case ':':
+			u.Scheme = raw[*anchor:i]
 			*anchor = i + 1
 			*anchorAux = *anchor
 			*state++
+		case ' ':
+			*anchor++
 		}
 	case userpass:
 		switch r {
@@ -140,6 +142,9 @@ func (u *URI) Parse(raw string) (err error) {
 		err = u.next(len(raw), '?', raw, &state, &anchor, &anchorAux)
 	default:
 		err = u.next(len(raw), ';', raw, &state, &anchor, &anchorAux)
+	}
+	if err != nil {
+		return
 	}
 
 	err = u.checkValid()
