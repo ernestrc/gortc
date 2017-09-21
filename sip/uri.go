@@ -123,6 +123,8 @@ func (u *URI) checkValid() error {
 	return nil
 }
 
+// Parse parses the given raw SIP URI into a structured RFC-3986 URI
+// or returns an error if URI is not valid
 func (u *URI) Parse(raw string) (err error) {
 	state := scheme
 	anchor := 0
@@ -151,6 +153,7 @@ func (u *URI) Parse(raw string) (err error) {
 	return
 }
 
+// String encodes a structured URI into a string
 func (u *URI) String() string {
 	uri := u.Scheme + ":"
 
