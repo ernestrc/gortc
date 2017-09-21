@@ -448,7 +448,7 @@ var marshalTestcases = []testCase{
 func TestUnmarshal(t *testing.T) {
 
 	for _, tcase := range marshalTestcases {
-		msg, err := UnmarshalCompat(tcase.data)
+		msg, n, err := UnmarshalCompat(tcase.data)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -461,6 +461,10 @@ func TestUnmarshal(t *testing.T) {
 			t.Errorf("found:\n")
 			f, _ := json.MarshalIndent(msg, "", "  ")
 			t.Errorf(string(f))
+		}
+
+		if n != len(tcase.data) {
+			t.Errorf("expected n to be %d instead of %d", len(tcase.data), n)
 		}
 	}
 }
@@ -486,14 +490,18 @@ func TestMarshal(t *testing.T) {
 }
 
 func TestNotStunError(t *testing.T) {
-	_, err := Unmarshal(rtcpPacket)
+	_, n, err := Unmarshal(rtcpPacket)
+
+	if n != 0 {
+		t.Errorf("expected n to be 0 instead of %d", n)
+	}
 
 	if err != ErrNoStun {
 		t.Fatalf("expected error to be ErrNoStun but %s found", err)
 	}
 
 	// non-backwards compatible method is used instead
-	_, err = Unmarshal(rfc3489SampleRequestBytes)
+	_, _, err = Unmarshal(rfc3489SampleRequestBytes)
 	if err != ErrNoStun {
 		t.Fatalf("expected error to be ErrNoStun but %s found", err)
 	}

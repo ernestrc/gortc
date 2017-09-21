@@ -159,7 +159,7 @@ func unmarshalAttr(data []byte) (attr Attribute, length int, err error) {
 	return
 }
 
-func unmarshal(data []byte) (msg Message, err error) {
+func unmarshal(data []byte) (msg Message, n int, err error) {
 	// length of the message excluding header
 	if len(data[20:]) < int(uint16(data[2])<<8|uint16(data[3])) {
 		err = ErrIncomplete
@@ -176,6 +176,7 @@ func unmarshal(data []byte) (msg Message, err error) {
 		ID: data[4:20],
 	}
 
+	n = 20
 	data = data[20:]
 
 	var attr Attribute
@@ -186,6 +187,7 @@ func unmarshal(data []byte) (msg Message, err error) {
 		}
 		msg.Attr = append(msg.Attr, attr)
 		data = data[4+length:]
+		n += 4 + length
 	}
 
 	return
@@ -193,7 +195,7 @@ func unmarshal(data []byte) (msg Message, err error) {
 
 // Unmarshal decodes the given packet into an RFC-5389 STUN message
 // or returns an error if there was a decoding error
-func Unmarshal(data []byte) (msg Message, err error) {
+func Unmarshal(data []byte) (msg Message, n int, err error) {
 	if !IsStun(data) {
 		err = ErrNoStun
 		return
@@ -205,7 +207,7 @@ func Unmarshal(data []byte) (msg Message, err error) {
 // UnmarshalCompat decodes a a given packet into a structured STUN message,
 // as described in RFC-5389 maintaining bacwkards compatibility with RFC-3489.
 // Unmarshal should be prefered except for maintaing backwards compatibility.
-func UnmarshalCompat(data []byte) (msg Message, err error) {
+func UnmarshalCompat(data []byte) (msg Message, n int, err error) {
 	if !IsStunCompat(data) {
 		err = ErrNoStun
 		return
